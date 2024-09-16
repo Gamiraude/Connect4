@@ -1,4 +1,12 @@
 import numpy as np
+from enum import Enum
+import random
+import time
+
+move_status = Enum('move_status', ['invalid_row', 'invalid_column', 'valid'])
+grid = np.zeros((6,7))
+counter = 0
+status = move_status.valid
 
 def player(counter):
     if counter % 2 == 0:
@@ -10,17 +18,17 @@ def moveRegistration(move):
     row = 5
         
     while True:
-        if 0 <= move - 1 < 7 and 0 <= row:
+        if 0 > move - 1 or move - 1 > 6:
+            return move_status.invalid_column, ()
+        elif row < 0:
+            return move_status.invalid_row, ()
+        else:
             if grid[row, move - 1] != 0:
                 row -= 1
             elif grid[row, move - 1] == 0:
                 grid[row, move - 1] = player(counter)
-                return (player(counter), row, move - 1)
-        else:
-            row = 5
-            print(f'All spots in column {move} are taken. Please choose a different column')
-            move = int(input('Choose your move (number from 1 to 7):'))
-
+                return move_status.valid, (player(counter), row, move - 1)     
+        
 def winConditionDiagonalsOrLeftRight(current_move, grid, xmodification, ymodification):
     winCounter = 1
     x = current_move[1]
@@ -59,32 +67,94 @@ def winCondition(current_move, grid):
             winConditionDiagonalsOrLeftRight(current_move, grid, 0, 1) or
             winConditionDiagonalsOrLeftRight(current_move, grid, 1, 0))
 
+def pvp():
+    global counter
+    global status
+    global grid
+
+    while True:
+        try:
+            print('\n')
+            print('*-*-*-*-*-*-*-*-*-*-*-*-*')
+            print(f'It is Player {player(counter)} turn.')
+            print('*-*-*-*-*-*-*-*-*-*-*-*-*\n')
+            print(grid)
+            print('\n')
+            
+            if status == move_status.invalid_column:
+                print('The number you enter must be in between 1 and 7!')
+            elif status == move_status.invalid_row:
+                print(f'All spots in column {move} are taken. Please choose a different column')
+
+            move = int(input('Choose your move (number from 1 to 7):'))
+
+            status, current_move = moveRegistration(move)
+                    
+            if status == move_status.valid:                   
+                if winCondition(current_move, grid):
+                    print(grid)
+                    print('\n')
+                    print(f'Player {current_move[0]} won!')
+                    print('CONGRATULATIONS! \\o/')
+                    break
+                counter += 1
+        except ValueError:
+            print('You must enter a number between 1 and 7!')
+            move = int(input('Choose your move (number from 1 to 7):'))
+
+def pve():
+    pc_choice = [1,2,3,4,5,6,7]
+    global counter
+    global status
+    global grid
+
+    while True:
+        try:
+            print('\n')
+            print(grid)
+            print('\n')
+            print('*-*-*-*-*-*-*-*-*-*-*-*-*')
+            print(f'It is Player {player(counter)} turn.')
+            print('*-*-*-*-*-*-*-*-*-*-*-*-*')
+            
+            if status == move_status.invalid_column:
+                print('The number you enter must be in between 1 and 7!')
+            elif status == move_status.invalid_row:
+                print(f'All spots in column {move} are taken. Please choose a different column')
+
+            if player(counter) == 1:
+                move = int(input('\nChoose your move (number from 1 to 7): '))
+            elif player(counter) == 2:
+                move = random.choice(pc_choice)
+                time.sleep(1)
+
+            status, current_move = moveRegistration(move)
+                    
+            if status == move_status.valid:                  
+                if winCondition(current_move, grid):
+                    print(grid)
+                    print('\n')
+                    print(f'Player {current_move[0]} won!')
+                    print('CONGRATULATIONS! \\o/')
+                    break
+                counter += 1
+        except ValueError:
+            print('You must enter a number between 1 and 7!')
+            move = int(input('Choose your move (number from 1 to 7):'))
+
+
+
 print('*-*-*-*-*-*-*-*-*-*-*-*-*')
 print('Welcome to the Connect 4!')
 print('*-*-*-*-*-*-*-*-*-*-*-*-*\n')
 
-grid = np.zeros((6,7))
-counter = 0
-    
 while True:
-    try:
-        print('*-*-*-*-*-*-*-*-*-*-*-*-*')
-        print(f'It is Player {player(counter)} turn.')
-        print('*-*-*-*-*-*-*-*-*-*-*-*-*\n')
-        print(grid)
-        print('\n')
-        
-        move = int(input('Choose your move (number from 1 to 7):\n'))
-        while 1 > move >= 8:            #while move not in range(1,8):
-            move = int(input('The number you enter must be in between 1 and 7! Choose your move:'))
-        if 1 <= move < 8:
-            current_move = moveRegistration(move)
-            print(grid)
-            print('\n')
-            if winCondition(current_move, grid):
-                print(f'Player {current_move[0]} won!')
-                break
-            counter += 1
-    except ValueError:
-        print('You must enter a number between 1 and 7!')
-        move = int(input('Choose your move (number from 1 to 7):'))
+        choice = str(input('Would you like to play against another player or computer (p/c)?')).lower()
+        if choice == 'p':
+            pvp()
+            break
+        elif choice == 'c':
+            pve()
+            break   
+        else:
+            print('Your choice must be p or c!')
